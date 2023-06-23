@@ -15,6 +15,9 @@ import copy
 
 import numpy as np
 
+Grid = List[List[int]]
+ACTIONS =[""]
+
 class World(Enum):
     EMPTY = 1
     WALL = 2
@@ -29,6 +32,85 @@ class World(Enum):
     TARGET = 11
     SUIT = 12
     PIANO_WIRE = 13
+
+def grid_to_coords_dict(grid: Grid) -> dict:
+    """
+    :param grid: grid of the level
+    :return: dict containing position of each element
+    """
+    coords = {
+        "cells": [],
+        "empty": [],
+        "hero": [],
+        "guards": [],
+        "targets": [],
+        "walls": [],
+        "costumes": [],
+        "ropes": [],
+        "nothing": [],
+    }
+
+    for i, line in enumerate(grid):
+        for j, cell in enumerate(line):
+            if cell != "#":
+                coords["cells"].append((i, j))
+            if cell in [" ", "G", "T", "W", "C", "R", "N"]:
+                coords["empty"].append((i, j))
+            if cell == "H":
+                coords["hero"].append((i, j))
+            elif cell == "G":
+                coords["guards"].append((i, j))
+            elif cell == "T":
+                coords["targets"].append((i, j))
+            elif cell == "W":
+                coords["walls"].append((i, j))
+            elif cell == "C":
+                coords["costumes"].append((i, j))
+            elif cell == "R":
+                coords["ropes"].append((i, j))
+            elif cell == "N":
+                coords["nothing"].append((i, j))
+
+    return coords
+
+
+def vocabulary(coords: dict) -> dict:
+    """
+    :param coords: dict containing coord of each element of the map
+    :return: dict containing all the vocabulary
+    """
+    cells = coords["cells"]
+    targets = coords["targets"]
+
+    act_vars = [("do", a) for a in ACTIONS]
+    at_vars = [("at", c) for c in cells]
+    vision_vars = [("vision", c) for c in cells]
+    hear_vars = [("hear", c) for c in cells]
+    hero_vars = [("hero", c) for c in cells]
+    guard_vars = [("guard", c) for c in cells]
+    target_vars = [("target", c) for c in targets]
+    wall_vars = [("wall", c) for c in cells]
+    costume_vars = [("costume", c) for c in cells]
+    rope_vars = [("rope", c) for c in cells]
+    nothing_vars = [("nothing", c) for c in cells]
+
+    return {
+        v: i + 1
+        for i, v in enumerate(
+            act_vars
+            + at_vars
+            + vision_vars
+            + hear_vars
+            + hero_vars
+            + guard_vars
+            + target_vars
+            + wall_vars
+            + costume_vars
+            + rope_vars
+            + nothing_vars
+        )
+    }
+
 
 
 def is_found_suit(state) -> bool:
@@ -61,7 +143,7 @@ def is_terminal(state) -> bool:
 
 def is_valid_position(state, x: int, y: int, world_example: List) -> bool:
     # Vérifiez les limites de la grille
-    if x < 0 or x >= state['n'] or y < 0 or y >= state['m']:
+    if x < 0 or x >= state['m'] or y < 0 or y >= state['n']:
         return False
 
     # Vérifiez les obstacles (murs, gardes, etc.)
@@ -316,3 +398,36 @@ def is_next_pos_in_vision(status, next_pos):
         if pos == next_pos:
             return True
     return False
+
+# Obtention des coordonnées des éléments à partir de la grille
+coords = grid_to_coords_dict(Grid)
+
+# Initialisation de l'état initial
+etat_initial = {}
+
+# Définir les valeurs des prédicats pour les éléments présents dans la grille initiale
+for cellule in coords["empty"]:
+    etat_initial["at({})".format(cellule)] = True
+
+for hero in coords["hero"]:
+    etat_initial["at({})".format(hero)] = True
+
+for rope  in coords["ropes"]:
+    etat_initial["at({})".format(rope)] =True
+
+for costume in coords["costumes"]:
+    etat_initial["at({})".format(costume)] =True
+
+for garde in coords["guards"]:
+    etat_initial["at({})".format(garde)] =True
+
+for target in coords["targets"]:
+    etat_initial["at({})".format(target)] =True
+
+# Autres prédicats de l'état initial...
+
+
+
+
+
+
